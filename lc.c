@@ -4,7 +4,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/dir.h>
 
 #define	WIDTH	79		/* Default line width */
@@ -13,16 +16,8 @@
 #define	INDENT2	4		/* Indent for files in a category */
 #define	NFNAME	400		/* Maximum a filename can expand to */
 
-/*
- * The DIRSIZ macro gives the minimum record length which will hold
- * the directory entry.  This requires the amount of space in struct direct
- * without the d_name field, plus enough space for the name with a terminating
- * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
- */
-#ifndef DIRSIZ
-#define DIRSIZ(dp) \
-    ((sizeof (struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
-#endif
+// from source/4.2.x/usr/include/kernel/dir.h
+# define	DIRSIZ		14
 
 int	oneflag;		/* One per line */
 int	aflag;			/* Do all entries, including `.' and `..' */
@@ -56,7 +51,19 @@ void addlist(ENTRY **lpp, ENTRY *ep);
 void clearlist(ENTRY **lpp);
 int doentry(char *dirname, struct direct *dp);
 void prnames();
-void prindent(x);
+int lcdir(char *dname);
+int lc(char *name);
+
+
+/*
+ * Print a line with possible indent.
+ */
+/* VARARGS */
+#define prindent(...) \
+	if (ndir > 1) \
+		printf("%*s", INDENT1, ""); \
+	printf(__VA_ARGS__); \
+	printed = 1
 
 int main(int argc, char *argv[])
 {
@@ -132,7 +139,7 @@ int main(int argc, char *argv[])
 /*
  * Do `lc' on a single name.
  */
-lc(name)
+int lc(name)
 char *name;
 {
 	char *type;
@@ -180,7 +187,7 @@ char *name;
 /*
  * Process one directory.
  */
-lcdir(dname)
+int lcdir(dname)
 char *dname;
 {
 	register struct direct *dp;
@@ -401,7 +408,7 @@ char *type;
 	for (ep = list; ep != NULL; ep = ep->e_fp) {
 		if (!oneflag && (i == 0)) {
 			printf("%*s", INDENT2, "");
-			prindent("");
+			prindent("\x0");
 		}
 		n = DIRSIZ;
 		for (cp=ep->e_name; *cp!='\0' && n; n--)
@@ -415,18 +422,6 @@ char *type;
 			putchar('\n');
 		}
 	}
-}
-
-/*
- * Print a line with possible indent.
- */
-/* VARARGS */
-void prindent(x)
-{
-	if (ndir > 1)
-		printf("%*s", INDENT1, "");
-	printf("%r", &x);
-	printed = 1;
 }
 
 void usage()
