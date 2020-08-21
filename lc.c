@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/dir.h>
+#include <errno.h>
 
 #define	WIDTH	79		/* Default line width */
 #define	GAP	1		/* Minimum gap between columns */
@@ -211,15 +212,20 @@ char *dname;
 		fprintf(stderr, "Cannot open directory `%s'\n", dname);
 		return 1;
 	}
+	errno = 0;
 	while ((dp = readdir(fd)) != NULL) {
-		if (dp->d_ino == 0)
+		if (dp->d_ino == 0) {
+			errno = 0;
 			continue;
+		}
 		doentry(dname, dp);
+		errno = 0;
 	}
-	closedir(dir);
+	int rd_errno = errno;
+	closedir(fd);
 	prnames();
-	if (nb < 0) {
-		fprintf(stderr, "%s: directory read error\n", dname);
+	if (rd_errno) {
+		fprintf(stderr, "%s: directory read error: %s\n", dname, strerror(rd_errno));
 		return (1);
 	}
 	return (0);
