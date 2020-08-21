@@ -2,6 +2,7 @@
  * List files in categories (and columns)
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
@@ -11,6 +12,17 @@
 #define	INDENT1	4		/* Indent for multiple directories */
 #define	INDENT2	4		/* Indent for files in a category */
 #define	NFNAME	400		/* Maximum a filename can expand to */
+
+/*
+ * The DIRSIZ macro gives the minimum record length which will hold
+ * the directory entry.  This requires the amount of space in struct direct
+ * without the d_name field, plus enough space for the name with a terminating
+ * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ */
+#ifndef DIRSIZ
+#define DIRSIZ(dp) \
+    ((sizeof (struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
+#endif
 
 int	oneflag;		/* One per line */
 int	aflag;			/* Do all entries, including `.' and `..' */
@@ -38,8 +50,15 @@ typedef	struct	ENTRY	{
 
 ENTRY	*files, *links, *dirs, *blocks, *chars, *pipes, *mults;
 
-int main(argc, argv)
-char *argv[];
+void usage();
+void prtype(ENTRY *list, char *type);
+void addlist(ENTRY **lpp, ENTRY *ep);
+void clearlist(ENTRY **lpp);
+int doentry(char *dirname, struct direct *dp);
+void prnames();
+void prindent(x);
+
+int main(int argc, char *argv[])
 {
 	register char *ap;
 	register int i;
@@ -206,7 +225,7 @@ char *dname;
  * indicated directory.
  * and then sort into the appropriate table.
  */
-doentry(dirname, dp)
+int doentry(dirname, dp)
 char *dirname;
 struct direct *dp;
 {
@@ -296,7 +315,7 @@ struct direct *dp;
  * Sort the list at insertion time
  * into lexicographic order.
  */
-addlist(lpp, ep)
+void addlist(lpp, ep)
 ENTRY **lpp;
 ENTRY *ep;
 {
@@ -319,7 +338,7 @@ ENTRY *ep;
  * Clear out the list, a pointer to which is
  * the argument.
  */
-clearlist(lpp)
+void clearlist(lpp)
 ENTRY **lpp;
 {
 	register ENTRY *rp, *op;
@@ -336,7 +355,7 @@ ENTRY **lpp;
 /*
  * Print out the appropriate names.
  */
-prnames()
+void prnames()
 {
 	if (dflag)
 		prtype(dirs, "Directories");
@@ -357,7 +376,7 @@ prnames()
 /*
  * Print out one type of files
  */
-prtype(list, type)
+void prtype(list, type)
 ENTRY *list;
 char *type;
 {
@@ -402,7 +421,7 @@ char *type;
  * Print a line with possible indent.
  */
 /* VARARGS */
-prindent(x)
+void prindent(x)
 {
 	if (ndir > 1)
 		printf("%*s", INDENT1, "");
@@ -410,7 +429,7 @@ prindent(x)
 	printed = 1;
 }
 
-usage()
+void usage()
 {
 	fprintf(stderr, "Usage: lc [-afdcbp] [-1] [name ...]\n");
 	exit(1);
