@@ -36,9 +36,9 @@ typedef	struct	ENTRY	{
 	char	e_name[DIRSIZ];
 }	ENTRY;
 
-ENTRY	*files, *dirs, *blocks, *chars, *pipes, *mults;
+ENTRY	*files, *links, *dirs, *blocks, *chars, *pipes, *mults;
 
-main(argc, argv)
+int main(argc, argv)
 char *argv[];
 {
 	register char *ap;
@@ -130,6 +130,10 @@ char *name;
 		type = "file";
 		break;
 
+	case S_IFLNK:
+		type = "symlink";
+		break;
+
 	case S_IFBLK:
 		type = "block special file";
 		break;
@@ -138,13 +142,12 @@ char *name;
 		type = "character special file";
 		break;
 
-	case S_IFMPB:
-	case S_IFMPC:
-		type = "multiplexed file";
+	case S_IFIFO:
+		type = "FIFO/pipe";
 		break;
 
-	case S_IFPIP:
-		type = "pipe";
+	case S_IFSOCK:
+		type = "socket";
 		break;
 
 	default:
@@ -166,6 +169,7 @@ char *dname;
 	register int fd;
 
 	clearlist(&files);
+	clearlist(&links);
 	clearlist(&dirs);
 	clearlist(&blocks);
 	clearlist(&chars);
@@ -253,6 +257,10 @@ struct direct *dp;
 			list = &files;
 			break;
 
+		case S_IFLNK:
+			list = &links;
+			break;
+
 		case S_IFDIR:
 			list = &dirs;
 			break;
@@ -265,12 +273,11 @@ struct direct *dp;
 			list = &chars;
 			break;
 
-		case S_IFMPC:
-		case S_IFMPB:
+		case S_IFSOCK:
 			list = &mults;
 			break;
 
-		case S_IFPIP:
+		case S_IFIFO:
 			list = &pipes;
 			break;
 
@@ -333,8 +340,10 @@ prnames()
 {
 	if (dflag)
 		prtype(dirs, "Directories");
-	if (fflag)
+	if (fflag) {
 		prtype(files, "Files");
+		prtype(links, "Symlinks");
+	}
 	if (cflag)
 		prtype(chars, "Character special files");
 	if (bflag)
