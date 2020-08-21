@@ -17,7 +17,8 @@
 #define	NFNAME	400		/* Maximum a filename can expand to */
 
 // from source/4.2.x/usr/include/kernel/dir.h
-# define	DIRSIZ		14
+//# define	DIRSIZ		14
+#define DIRSIZ MAXNAMLEN
 
 int	oneflag;		/* One per line */
 int	aflag;			/* Do all entries, including `.' and `..' */
@@ -34,7 +35,6 @@ int	maxwidth;		/* Maximum width of a filename */
 int	lwidth = WIDTH-INDENT2;
 
 struct	stat	sb;
-char	iobuf[BUFSIZ];
 char	obuf[BUFSIZ];
 char	fname[NFNAME];
 
@@ -49,7 +49,7 @@ void usage();
 void prtype(ENTRY *list, char *type);
 void addlist(ENTRY **lpp, ENTRY *ep);
 void clearlist(ENTRY **lpp);
-int doentry(char *dirname, struct direct *dp);
+int doentry(char *dirname, struct dirent *dp);
 void prnames();
 int lcdir(char *dname);
 int lc(char *name);
@@ -190,9 +190,8 @@ char *name;
 int lcdir(dname)
 char *dname;
 {
-	register struct direct *dp;
-	register int nb;
-	register int fd;
+	register struct dirent *dp;
+	register DIR *fd;
 
 	clearlist(&files);
 	clearlist(&links);
@@ -208,17 +207,16 @@ char *dname;
 		printf("%s:\n", dname);
 	}
 	printed = 0;
-	if ((fd = open(dname, 0)) < 0) {
+	if (!(fd = opendir(dname))) {
 		fprintf(stderr, "Cannot open directory `%s'\n", dname);
-		return (1);
+		return 1;
 	}
-	while ((nb = read(fd, iobuf, BUFSIZ)) > 0)
-		for (dp = iobuf; dp < &iobuf[nb]; dp++) {
-			if (dp->d_ino == 0)
-				continue;
-			doentry(dname, dp);
-		}
-	close(fd);
+	while ((dp = readdir(fd)) != NULL) {
+		if (dp->d_ino == 0)
+			continue;
+		doentry(dname, dp);
+	}
+	closedir(dir);
 	prnames();
 	if (nb < 0) {
 		fprintf(stderr, "%s: directory read error\n", dname);
@@ -234,7 +232,7 @@ char *dname;
  */
 int doentry(dirname, dp)
 char *dirname;
-struct direct *dp;
+struct dirent *dp;
 {
 	int width = 0;
 
@@ -408,7 +406,7 @@ char *type;
 	for (ep = list; ep != NULL; ep = ep->e_fp) {
 		if (!oneflag && (i == 0)) {
 			printf("%*s", INDENT2, "");
-			prindent("\x0");
+			prindent("");
 		}
 		n = DIRSIZ;
 		for (cp=ep->e_name; *cp!='\0' && n; n--)
