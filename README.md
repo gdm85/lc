@@ -9,6 +9,10 @@ The original source file is `COHERENT/romana/relic/d/bin/lc.c` in the archive.
 The original manual page:
 ![lc manual page](./lc_manual.png)
 
+## Differences from original
+
+I added support of symlinks (`-l` command-line option).
+
 ## License
 
 Released with the original [LICENSE](./LICENSE.md).

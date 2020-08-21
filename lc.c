@@ -27,6 +27,7 @@ int	bflag;			/* Do block special */
 int	cflag;			/* Do character special */
 int	dflag;			/* Do directories */
 int	fflag;			/* Do regular files */
+int	lflag;			/* Do symlinks */
 int	mflag;			/* Do multiplexor files */
 int	pflag;			/* Do pipes */
 int	allflag = 1;		/* Do all types */
@@ -64,7 +65,12 @@ int lc(char *name);
 	if (ndir > 1) \
 		printf("%*s", INDENT1, ""); \
 	printf(__VA_ARGS__); \
-	printed = 1
+	printed = 1;
+
+#define prindent_empty() \
+	if (ndir > 1) \
+		printf("%*s", INDENT1, ""); \
+	printed = 1;
 
 int main(int argc, char *argv[])
 {
@@ -82,6 +88,11 @@ int main(int argc, char *argv[])
 
 			case 'd':
 				dflag = 1;
+				allflag = 0;
+				break;
+
+			case 'l':
+				lflag = 1;
 				allflag = 0;
 				break;
 
@@ -120,7 +131,7 @@ int main(int argc, char *argv[])
 		argc--;
 	}
 	if (allflag)
-		fflag = dflag = cflag = bflag = mflag = pflag = 1;
+		fflag = dflag = cflag = bflag = mflag = lflag = pflag = 1;
 	setbuf(stdout, obuf);
 	if (argc < 2) {
 		ndir = 1;
@@ -370,10 +381,10 @@ void prnames()
 {
 	if (dflag)
 		prtype(dirs, "Directories");
-	if (fflag) {
+	if (fflag)
 		prtype(files, "Files");
+	if (lflag)
 		prtype(links, "Symlinks");
-	}
 	if (cflag)
 		prtype(chars, "Character special files");
 	if (bflag)
@@ -412,7 +423,7 @@ char *type;
 	for (ep = list; ep != NULL; ep = ep->e_fp) {
 		if (!oneflag && (i == 0)) {
 			printf("%*s", INDENT2, "");
-			prindent("");
+			prindent_empty();
 		}
 		n = DIRSIZ;
 		for (cp=ep->e_name; *cp!='\0' && n; n--)
@@ -430,6 +441,6 @@ char *type;
 
 void usage()
 {
-	fprintf(stderr, "Usage: lc [-afdcbp] [-1] [name ...]\n");
+	fprintf(stderr, "Usage: lc [-afdcbpl] [-1] [name ...]\n");
 	exit(1);
 }
