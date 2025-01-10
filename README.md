@@ -6,7 +6,11 @@ The original source file is `COHERENT/romana/relic/d/bin/lc.c` in the archive.
 
 ## Manual
 
-The original manual page:
+The original manual page, lightly edited and converted to use modern `-man` macros, is in the file `doc/lc.1`.
+On a modern Linux system, it may be viewed with `man ./docs/lc.1`. The original, unaltered manual page source is in `doc/lc.orig.troff`.
+
+A scanned manual page may be viewed below:
+
 ![lc manual page](./lc_manual.png)
 
 ## Differences from original
