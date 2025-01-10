@@ -1,0 +1,75 @@
+.TH LC 1 "January 2025" "Coherent UNIX" "User Commands"
+.SH NAME
+lc - list directory contents in columnar format
+
+.SH SYNOPSIS
+.B lc
+[\fB-1abcdfp\fR] [\fIDIRECTORY\fR]...
+
+.SH DESCRIPTION
+.B lc
+lists the contents of the specified
+.IR DIRECTORY ,
+or the current directory if none is provided. It categorizes files by type (e.g. regular files, directories) and displays them in columns for readability.
+
+.SH OPTIONS
+.TP
+.BR -1
+List one file per line, instead of in columns.
+.TP
+.B -a
+List all files, including hidden entries `.' and `..'.
+.TP
+.B -b
+List block-special files only.
+.TP
+.B -c
+List character-special files only.
+.TP
+.B -d
+List directories only.
+.TP
+.B -f
+List regular files only.
+.TP
+.B -l
+List symbolic links only.
+.TP
+.B -p
+List pipe (FIFO) files only.
+
+.SH USAGE
+Options can be combined for customized output. For example, to display all files, one per line:
+.PP
+.RS
+.EX
+lc \-a1
+.EE
+.RE
+
+.PP
+If no directory is specified,
+.B lc
+defaults to the current working directory.
+
+.SH EXAMPLES
+The following command lists all regular files in the current directory:
+.PP
+.RS
+.EX
+lc -f
+.EE
+.RE
+
+To copy all regular files to a directory called
+.B mydir
+you can use:
+.PP
+.RS
+.EX
+cp `lc -f` mydir
+.EE
+.RE
+
+.SH SEE ALSO
+.BR ls (1)
